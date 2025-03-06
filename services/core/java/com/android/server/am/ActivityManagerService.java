@@ -19084,4 +19084,8 @@ public class ActivityManagerService extends IActivityManager.Stub
     Freezer getFreezer() {
         return mFreezer;
     }
+
+    public void radicalFreezingList(int[] uids) {
+        mOomAdjuster.radicalFreezingList = uids;
+    }
 }

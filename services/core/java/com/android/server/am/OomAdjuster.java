@@ -3898,6 +3898,8 @@ public class OomAdjuster {
         mCacheOomRanker.dump(pw);
     }
 
+    static final int RADICAL_FREEZER_CUTOFF_ADJ = PERCEPTIBLE_APP_ADJ;
+    public int[] radicalFreezingList = new int[]{};
     @GuardedBy({"mService", "mProcLock"})
     void updateAppFreezeStateLSP(ProcessRecord app, @OomAdjReason int oomAdjReason,
             boolean immediate, int oldOomAdj) {
@@ -3936,6 +3938,25 @@ public class OomAdjuster {
             mCachedAppOptimizer.unfreezeAppLSP(app,
                     CachedAppOptimizer.getUnfreezeReasonCodeFromOomAdjReason(oomAdjReason));
             return;
+        }
+
+        for (int uid : radicalFreezingList) {
+            // radical freezing/thawing for listed apps on they being visable/invisable.
+            if (uid == app.uid) {
+                if (state.getCurAdj() >= RADICAL_FREEZER_CUTOFF_ADJ && !opt.isFrozen()
+                        && !opt.shouldNotFreeze()) {
+                    if (!immediate) {
+                        mCachedAppOptimizer.freezeAppAsyncLSP(app);
+                    } else {
+                        mCachedAppOptimizer.freezeAppAsyncAtEarliestLSP(app);
+                    }
+                } else if (state.getSetAdj() < RADICAL_FREEZER_CUTOFF_ADJ) {
+                    mCachedAppOptimizer.unfreezeAppLSP(app,
+                            CachedAppOptimizer.getUnfreezeReasonCodeFromOomAdjReason(oomAdjReason));
+                }
+
+                return;
+            }
         }
 
         // Use current adjustment when freezing, set adjustment when unfreezing.

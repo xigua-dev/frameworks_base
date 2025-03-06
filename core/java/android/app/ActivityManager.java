@@ -6562,6 +6562,17 @@ public class ActivityManager {
     }
 
     /**
+     * @hide
+     */
+    public void radicalFreezingList(int[] uids) {
+        try {
+            getService().radicalFreezingList(uids);
+        } catch (RemoteException e) {
+            e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
      * A subset of immutable pending intent information suitable for caching on the client side.
      *
      * @hide
